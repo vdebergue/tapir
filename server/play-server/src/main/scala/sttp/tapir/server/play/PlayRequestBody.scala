@@ -71,6 +71,8 @@ private[play] class PlayRequestBody(serverOptions: PlayServerOptions)(implicit
       Multipart.handleFilePartAsTemporaryFile(serverOptions.temporaryFileCreator)
     )
     bodyParser.apply(request).run(body()).flatMap {
+      case Left(result) if result.header.status == 413 =>
+        Future.failed(new IllegalArgumentException("Payload too large"))
       case Left(_) =>
         Future.failed(new IllegalArgumentException("Unable to parse multipart form data.")) // TODO
       case Right(value) =>
